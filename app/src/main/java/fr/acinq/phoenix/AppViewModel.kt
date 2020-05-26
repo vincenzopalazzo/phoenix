@@ -31,6 +31,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
 import com.msopentech.thali.toronionproxy.OnionProxyManager
+import com.typesafe.config.ConfigFactory
 import fr.acinq.bitcoin.*
 import fr.acinq.eclair.*
 import fr.acinq.eclair.`package$`
@@ -657,7 +658,11 @@ class AppViewModel : ViewModel() {
   private fun startNode(context: Context, pin: String): KitState.Started {
     log.info("starting up node...")
 
-    val system = ActorSystem.create("system")
+    // TODO: is there a better way ?
+    val defaultConfig = ConfigFactory.load()
+    val customConfig = Wallet.getOverrideConfig(context)
+    val config = defaultConfig.withFallback(customConfig)
+    val system = ActorSystem.create("system", config)
     system.registerOnTermination {
       log.info("system has been shutdown, all actors are terminated")
     }
@@ -698,7 +703,7 @@ class AppViewModel : ViewModel() {
 
     Class.forName("org.sqlite.JDBC")
     val acinqNodeAddress = `NodeAddress$`.`MODULE$`.fromParts(Wallet.ACINQ.address().host, Wallet.ACINQ.address().port).get()
-    val setup = Setup(Wallet.getDatadir(context), Wallet.getOverrideConfig(context), Option.apply(seed), Option.empty(), Option.apply(SingleAddressEclairWallet(bech32Address)), system)
+    val setup = Setup(Wallet.getDatadir(context), Option.apply(seed), Option.empty(), Option.apply(SingleAddressEclairWallet(bech32Address)), system)
     setup.nodeParams().db().peers().addOrUpdatePeer(Wallet.ACINQ.nodeId(), acinqNodeAddress)
     log.info("node setup ready, running version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
 
