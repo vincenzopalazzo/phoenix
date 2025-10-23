@@ -16,10 +16,12 @@ import fr.acinq.phoenix.data.ContactOffer
 
 object Deserialization {
 
+    const val VERSION_MAGIC = 1
+
     fun deserialize(bin: ByteArray): ContactInfo {
         val input = ByteArrayInput(bin)
         val version = input.read()
-        require(version == Serialization.VERSION_MAGIC) { "incorrect version $version, expected ${Serialization.VERSION_MAGIC}" }
+        require(version == VERSION_MAGIC) { "incorrect version $version, expected ${VERSION_MAGIC}" }
         return input.readContactInfo()
     }
 
@@ -29,7 +31,8 @@ object Deserialization {
         photoUri = readNullable { readString() },
         useOfferKey = readBoolean(),
         offers = readCollection { readContactOffer() }.toList(),
-        addresses = readCollection { readContactAddress() }.toList()
+        addresses = readCollection { readContactAddress() }.toList(),
+        secrets = listOf()
     )
 
     private fun Input.readContactOffer() = ContactOffer(
