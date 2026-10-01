@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import fr.acinq.bitcoin.PublicKey
 import fr.acinq.lightning.db.Bolt12IncomingPayment
 import fr.acinq.lightning.utils.UUID
 import fr.acinq.phoenix.PhoenixBusiness
@@ -56,7 +55,7 @@ fun SplashIncomingBolt12(
         meta.payerNote?.takeIf { it.isNotBlank() }?.let {
             SplashOfferPayerNote(payerNote = it)
         }
-        OfferSentBy(business = business, payerPubkey = meta.payerKey, !meta.payerNote.isNullOrBlank())
+        OfferSentBy(business = business, payment = payment, metadata = metadata, hasPayerNote = !meta.payerNote.isNullOrBlank())
     }
 
     SplashDescription(
@@ -78,13 +77,12 @@ fun SplashOfferPayerNote(payerNote: String) {
 }
 
 @Composable
-private fun OfferSentBy(business: PhoenixBusiness, payerPubkey: PublicKey?, hasPayerNote: Boolean) {
+private fun OfferSentBy(business: PhoenixBusiness, payment: Bolt12IncomingPayment, metadata: WalletPaymentMetadata, hasPayerNote: Boolean) {
     val contactsDb by business.databaseManager.contactsDb.collectAsState(null)
     val contactState = remember { mutableStateOf<OfferContactState>(OfferContactState.Init) }
     LaunchedEffect(contactsDb) {
-        contactState.value = payerPubkey?.let {
-            contactsDb?.contactForPayerPubKey(it)
-        }?.let { OfferContactState.Found(it) } ?: OfferContactState.NotFound
+        // bLIP 42: match on the contact secret first, then fall back to the payer key.
+        contactState.value = contactsDb?.contactForPayment(payment, metadata)?.let { OfferContactState.Found(it) } ?: OfferContactState.NotFound
     }
 
     SplashLabelRow(label = stringResource(id = R.string.paymentdetails_offer_sender_label)) {

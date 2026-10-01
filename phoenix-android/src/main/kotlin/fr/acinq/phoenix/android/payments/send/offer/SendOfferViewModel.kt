@@ -86,6 +86,7 @@ class SendOfferViewModel(
                 offer = offer,
                 payerKey = payerKey,
                 payerNote = payerNote,
+                contactSecret = null,
                 fetchInvoiceTimeout = 30.seconds,
                 // FIXME: this method should accept a trampolineFees parameter
             )

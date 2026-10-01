@@ -234,7 +234,7 @@ private fun ColumnScope.ContactNameAndPhoto(
                         return@Button
                     }
                     scope.launch {
-                        val newContact = ContactInfo(id = contactId, name = name, photoUri = photoUri, useOfferKey = useOfferKey, offers = contactOffers, addresses = contactAddresses)
+                        val newContact = ContactInfo(id = contactId, name = name, photoUri = photoUri, useOfferKey = useOfferKey, offers = contactOffers, addresses = contactAddresses, secrets = contact?.secrets ?: emptyList())
                         saveContactToDb(newContact)
                         onContactChange(newContact)
                     }
